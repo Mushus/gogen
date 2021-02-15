@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"log"
-	"reflect"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -49,39 +48,6 @@ type targetStruct struct {
 type fileGenerator interface {
 	collectParams() error
 	generate() error
-}
-
-type GenerateStruct struct {
-	Construct         bool
-	Getter            bool
-	Setter            bool
-	Package           string
-	Imports           []Import
-	Name              string
-	NameUpper         string
-	NameSnake         string
-	Type              string
-	Fields            []StructField
-	ConstructTemplate string
-}
-
-type Import struct {
-	Name        string
-	Path        string
-	PathLiteral string
-}
-
-type StructField struct {
-	Name         string
-	NameUpper    string
-	Type         string
-	IsPublic     bool
-	Tag          reflect.StructTag
-	ConstructTag ConstructTag
-}
-
-type ConstructTag struct {
-	Ignore bool
 }
 
 var (

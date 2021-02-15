@@ -35,7 +35,7 @@ func (g *constructGenerator) collectParams(aqi *aq.Instance, oldGeneratedCode []
 	}
 
 	{
-		s := aqi.Structs().FindOne(aq.StructNameIs(g.structName))
+		s := aqi.Structs().Find(aq.StructNameIs(g.structName))
 		if !s.Exists() {
 			return errors.Errorf("struct %#v not found", g.structName)
 		}

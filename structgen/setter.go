@@ -28,7 +28,7 @@ func newSetterGenerator(structName string) *setterGenerator {
 }
 
 func (g *setterGenerator) collectParams(aqi *aq.Instance, oldGeneratedCode []byte) error {
-	s := aqi.Structs().FindOne(aq.StructNameIs(g.structName))
+	s := aqi.Structs().Find(aq.StructNameIs(g.structName))
 	if !s.Exists() {
 		return errors.Errorf("struct %#v not found", g.structName)
 	}
@@ -43,7 +43,7 @@ func (g *setterGenerator) createSetterParams(fields aq.Fields) []setterParams {
 	setter := []setterParams{}
 
 	for _, f := range fields {
-		if f.IsPublic() {
+		if f.IsExported() {
 			continue
 		}
 

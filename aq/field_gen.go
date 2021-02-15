@@ -6,26 +6,26 @@ import (
 	"go/ast"
 )
 
-func NewFunc(
-	decl *ast.FuncDecl,
-) *Func {
-	c := &Func{
-		decl: decl,
+func NewField(
+	field *ast.Field,
+) *Field {
+	c := &Field{
+		field: field,
 	}
 
 	return c
 }
 
-type Funcs []*Func
+type Fields []*Field
 
-func (r Funcs) Chunk(size int) []Funcs {
-	list := []Funcs{}
-	chunk := Funcs{}
+func (r Fields) Chunk(size int) []Fields {
+	list := []Fields{}
+	chunk := Fields{}
 	for _, v := range r {
 		chunk := append(chunk, v)
 		if len(chunk) >= size {
 			list = append(list, chunk)
-			chunk = Funcs{}
+			chunk = Fields{}
 		}
 	}
 	if len(chunk) > 0 {
@@ -34,8 +34,8 @@ func (r Funcs) Chunk(size int) []Funcs {
 	return list
 }
 
-func (r Funcs) Compact() Funcs {
-	l := Funcs{}
+func (r Fields) Compact() Fields {
+	l := Fields{}
 	for _, v := range r {
 		if v == nil {
 			l = append(l, v)
@@ -44,31 +44,31 @@ func (r Funcs) Compact() Funcs {
 	return l
 }
 
-func (r Funcs) Concat(l Funcs) Funcs {
-	return append(append(Funcs{}, r...), l...)
+func (r Fields) Concat(l Fields) Fields {
+	return append(append(Fields{}, r...), l...)
 }
 
-func (r Funcs) Copy() Funcs {
-	dist := make(Funcs, len(r))
+func (r Fields) Copy() Fields {
+	dist := make(Fields, len(r))
 	copy(dist, r)
 	return dist
 }
 
-func (r Funcs) Count() int {
+func (r Fields) Count() int {
 	return len(r)
 }
 
-func (r Funcs) Each(f func(i int, v *Func)) {
+func (r Fields) Each(f func(i int, v *Field)) {
 	for i, v := range r {
 		f(i, v)
 	}
 }
 
-func (r Funcs) Exists() bool {
+func (r Fields) Exists() bool {
 	return r != nil && len(r) > 0
 }
 
-func (r Funcs) Every(f func(i int, v *Func) bool) bool {
+func (r Fields) Every(f func(i int, v *Field) bool) bool {
 	for i, v := range r {
 		if !f(i, v) {
 			return false
@@ -77,8 +77,8 @@ func (r Funcs) Every(f func(i int, v *Func) bool) bool {
 	return true
 }
 
-func (r Funcs) Filter(funcs ...func(i int, v *Func) bool) Funcs {
-	list := Funcs{}
+func (r Fields) Filter(funcs ...func(i int, v *Field) bool) Fields {
+	list := Fields{}
 L:
 	for i, v := range r {
 		for _, f := range funcs {
@@ -91,7 +91,7 @@ L:
 	return list
 }
 
-func (r Funcs) Find(funcs ...func(i int, v *Func) bool) *Func {
+func (r Fields) Find(funcs ...func(i int, v *Field) bool) *Field {
 L:
 	for i, v := range r {
 		for _, f := range funcs {
@@ -104,7 +104,7 @@ L:
 	return nil
 }
 
-func (r Funcs) FindIndex(funcs ...func(i int, v *Func) bool) int {
+func (r Fields) FindIndex(funcs ...func(i int, v *Field) bool) int {
 L:
 	for i, v := range r {
 		for _, f := range funcs {
@@ -117,57 +117,57 @@ L:
 	return -1
 }
 
-func (r Funcs) First() *Func {
+func (r Fields) First() *Field {
 	if len(r) == 0 {
 		return nil
 	}
 	return r[0]
 }
 
-func (r Funcs) ForPage(pageNo int, size int) Funcs {
+func (r Fields) ForPage(pageNo int, size int) Fields {
 	rLen := len(r)
-	list := make(Funcs, 0, size)
+	list := make(Fields, 0, size)
 	for i, k := pageNo*size, 0; i < rLen && k < size; i, k = i+1, k+1 {
 		list = append(list, r[i])
 	}
 	return list
 }
 
-func (r Funcs) Get(i int) *Func {
+func (r Fields) Get(i int) *Field {
 	if 0 <= i && i < len(r) {
 		return r[i]
 	}
 	return nil
 }
 
-func (r Funcs) Has(f func(i int, v *Func) bool) bool {
+func (r Fields) Has(f func(i int, v *Field) bool) bool {
 	return r.Some(f)
 }
 
-func (r Funcs) IsEmpty() bool {
+func (r Fields) IsEmpty() bool {
 	return len(r) == 0
 }
 
-func (r Funcs) IsNotEmpty() bool {
+func (r Fields) IsNotEmpty() bool {
 	return len(r) > 0
 }
 
-func (r Funcs) Last() *Func {
+func (r Fields) Last() *Field {
 	if len(r) == 0 {
 		return nil
 	}
 	return r[len(r)-1]
 }
 
-func (r Funcs) Reverse() Funcs {
-	list := make(Funcs, 0, len(r))
+func (r Fields) Reverse() Fields {
+	list := make(Fields, 0, len(r))
 	for i := len(r) - 1; i >= 0; i-- {
 		list = append(list, r[i])
 	}
 	return list
 }
 
-func (r Funcs) Some(f func(i int, v *Func) bool) bool {
+func (r Fields) Some(f func(i int, v *Field) bool) bool {
 	for i, v := range r {
 		if f(i, v) {
 			return true
@@ -176,14 +176,14 @@ func (r Funcs) Some(f func(i int, v *Func) bool) bool {
 	return false
 }
 
-func (r Funcs) Take(size int) Funcs {
+func (r Fields) Take(size int) Fields {
 	if len(r) > size {
 		return r
 	}
 	return r[:size]
 }
 
-func (r Funcs) Name() []string {
+func (r Fields) Name() []string {
 	l := make([]string, 0, len(r))
 	for _, r := range r {
 		l = append(l, r.Name())
@@ -191,34 +191,26 @@ func (r Funcs) Name() []string {
 	return l
 }
 
-func (r Funcs) Recv() []*Field {
-	l := make([]*Field, 0, len(r))
-	for _, r := range r {
-		l = append(l, r.Recv())
-	}
-	return l
-}
-
-func (r Funcs) Type() []*FuncType {
-	l := make([]*FuncType, 0, len(r))
+func (r Fields) Type() []*Type {
+	l := make([]*Type, 0, len(r))
 	for _, r := range r {
 		l = append(l, r.Type())
 	}
 	return l
 }
 
-func (r Funcs) Params() []Fields {
-	l := make([]Fields, 0, len(r))
+func (r Fields) Tag() []*Tag {
+	l := make([]*Tag, 0, len(r))
 	for _, r := range r {
-		l = append(l, r.Params())
+		l = append(l, r.Tag())
 	}
 	return l
 }
 
-func (r Funcs) Results() []Fields {
-	l := make([]Fields, 0, len(r))
+func (r Fields) IsExported() []bool {
+	l := make([]bool, 0, len(r))
 	for _, r := range r {
-		l = append(l, r.Results())
+		l = append(l, r.IsExported())
 	}
 	return l
 }

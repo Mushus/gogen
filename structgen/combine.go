@@ -68,7 +68,7 @@ func (g *combineGenerator) generatedFilePath() string {
 
 func (g *combineGenerator) collectParams() error {
 	aqi := aq.New().MustLoadDir(*path, aq.IngoreSuffix(g.genFileSuffix))
-	s := aqi.Structs().FindOne(aq.StructNameIs(g.structName))
+	s := aqi.Structs().Find(aq.StructNameIs(g.structName))
 	if !s.Exists() {
 		return errors.New("generate target struct not found")
 	}

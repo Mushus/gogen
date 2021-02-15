@@ -45,10 +45,6 @@ func TestStructsHas(t *testing.T) {
 	if !structs.Has(aq.StructNameIs("Foo")) {
 		t.Fail()
 	}
-
-	if !structs[0].Has(aq.StructNameIs("Foo")) {
-		t.Fail()
-	}
 }
 
 func TestStructsField(t *testing.T) {
@@ -64,7 +60,7 @@ func TestStructsField(t *testing.T) {
 	f := aq.New().
 		MustLoadFromSource(source).
 		Structs().
-		FindOne(aq.StructNameIs("Foo")).
+		Find(aq.StructNameIs("Foo")).
 		Fields()
 
 	if f.Count() != 2 {
@@ -84,7 +80,7 @@ func TestStructTag(t *testing.T) {
 	tag := aq.New().
 		MustLoadFromSource(source).
 		Structs().
-		FindOne(aq.StructNameIs("Foo")).
+		Find(aq.StructNameIs("Foo")).
 		Fields().
 		FindByName("Bar").
 		Tag().Body()

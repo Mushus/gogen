@@ -1,8 +1,6 @@
 package aq
 
 import (
-	"fmt"
-	"io/ioutil"
 	"path/filepath"
 	"strings"
 )
@@ -24,30 +22,24 @@ func IngoreSuffix(suffix ...string) LoadOption {
 	}
 }
 
-func (o loadOptionSet) getGoFiles(dir string) ([]string, error) {
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read dir %#v: %w", dir, err)
-	}
-
-	filenames := make([]string, 0)
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-
-		filename := file.Name()
-		if filepath.Ext(filename) != ".go" {
-			continue
-		}
-
+func (o loadOptionSet) filterFiles(filenames []string) []string {
+	filtered := []string{}
+L:
+	for _, filename := range filenames {
 		basename := filepath.Base(filename)
+
 		if o.parseTestCode != strings.HasSuffix(basename, "_test") {
 			continue
 		}
 
-		filenames = append(filenames, filepath.Join(dir, filename))
+		for _, is := range o.ignoreSuffix {
+			if strings.HasSuffix(basename, is) {
+				continue L
+			}
+		}
+
+		filtered = append(filtered, filename)
 	}
 
-	return filenames, nil
+	return filenames
 }

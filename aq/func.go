@@ -4,9 +4,8 @@ import (
 	"go/ast"
 )
 
-//go:generate go run github.com/Mushus/gogen/structgen -list Func
 type Func struct {
-	decl *ast.FuncDecl
+	decl *ast.FuncDecl `getter:"-"`
 }
 
 func createFunc(decl *ast.FuncDecl) *Func {
@@ -24,7 +23,7 @@ func (f *Func) Exists() bool {
 }
 
 func (f *Func) Name() string {
-	if !f.Exists() {
+	if f == nil {
 		return ""
 	}
 
@@ -32,7 +31,7 @@ func (f *Func) Name() string {
 }
 
 func (f *Func) Recv() *Field {
-	if !f.Exists() {
+	if f == nil {
 		return nil
 	}
 
@@ -41,8 +40,38 @@ func (f *Func) Recv() *Field {
 		return nil
 	}
 
-	for _, recv := range fl.List {
-		return createField(nil, recv)
+	return NewFields(fl).First()
+}
+
+func (f *Func) Type() *FuncType {
+	if f == nil {
+		return nil
 	}
-	return nil
+	return NewFuncType(f.decl.Type)
+}
+
+func (f *Func) Params() Fields {
+	return f.Type().Params()
+}
+
+func (f *Func) Results() Fields {
+	return f.Type().Results()
+}
+
+type FuncType struct {
+	typ *ast.FuncType
+}
+
+func (t *FuncType) Params() Fields {
+	if t == nil || t.typ == nil || t.typ.Params == nil {
+		return nil
+	}
+	return NewFields(t.typ.Params)
+}
+
+func (t *FuncType) Results() Fields {
+	if t == nil || t.typ == nil || t.typ.Results == nil {
+		return nil
+	}
+	return NewFields(t.typ.Results)
 }

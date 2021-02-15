@@ -5,15 +5,7 @@ import (
 )
 
 type Field struct {
-	aqStruct *Struct
-	field    *ast.Field
-}
-
-func createField(aqStruct *Struct, field *ast.Field) *Field {
-	return &Field{
-		aqStruct: aqStruct,
-		field:    field,
-	}
+	field *ast.Field `getter:"-"`
 }
 
 func (f *Field) Exists() bool {
@@ -21,18 +13,27 @@ func (f *Field) Exists() bool {
 }
 
 func (f *Field) Name() string {
+	if !f.Exists() {
+		return ""
+	}
 	return safeIdentsName(f.field.Names)
 }
 
 func (f *Field) Type() *Type {
+	if !f.Exists() {
+		return nil
+	}
 	return createType(f.field.Type)
 }
 
 func (f *Field) Tag() *Tag {
+	if !f.Exists() {
+		return nil
+	}
 	return createTag(f.field.Tag)
 }
 
-func (f *Field) IsPublic() bool {
+func (f *Field) IsExported() bool {
 	if !f.Exists() {
 		return false
 	}
@@ -43,26 +44,21 @@ func (f *Field) IsPublic() bool {
 	}
 	// TODO: embed
 
-	nameRune := []rune(name)
-	firstLetter := nameRune[0]
-	return 'A' <= firstLetter && firstLetter <= 'Z'
+	return ast.IsExported(name)
 }
 
-type Fields []*Field
+func NewFields(f *ast.FieldList) Fields {
+	if f == nil {
+		return nil
+	}
+	l := make(Fields, 0, f.NumFields())
+	for _, v := range f.List {
+		l = append(l, NewField(v))
+	}
 
-func (f Fields) Exists() bool {
-	return f != nil || f.Count() == 0
-}
-
-func (f Fields) Count() int {
-	return len(f)
+	return l
 }
 
 func (f Fields) FindByName(name string) *Field {
-	for _, field := range f {
-		if field.Name() == name {
-			return field
-		}
-	}
-	return nil
+	return f.Find(func(i int, v *Field) bool { return v.Name() == name })
 }

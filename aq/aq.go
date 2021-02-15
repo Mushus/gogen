@@ -2,11 +2,12 @@ package aq
 
 import (
 	"go/ast"
+	"go/build"
 	"go/parser"
 	"go/token"
-	"path/filepath"
-	"strings"
 )
+
+//go:generate go run github.com/Mushus/gogen/structgen -construct Decl,Field,File,Func,FuncType,Import,Struct,TypeDef,Decl -list Decl,Field,File,Func,FuncType,Import,Struct,TypeDef,Decl
 
 type Instance struct {
 	fileSet *token.FileSet
@@ -21,6 +22,23 @@ func New() *Instance {
 	}
 }
 
+func (i *Instance) MustLoadFile(filename string) *Instance {
+	err := i.LoadDir(filename)
+	if err != nil {
+		panic(err)
+	}
+	return i
+}
+
+func (i *Instance) LoadFile(filename string) error {
+	file, err := parser.ParseFile(i.fileSet, filename, nil, parser.ParseComments)
+	if err != nil {
+		return err
+	}
+	i.files = append(i.files, file)
+	return nil
+}
+
 func (i *Instance) MustLoadDir(dir string, opts ...LoadOption) *Instance {
 	err := i.LoadDir(dir, opts...)
 	if err != nil {
@@ -30,6 +48,15 @@ func (i *Instance) MustLoadDir(dir string, opts ...LoadOption) *Instance {
 }
 
 func (i *Instance) LoadDir(dir string, opts ...LoadOption) error {
+	pkg, err := build.ImportDir(dir, 0)
+	if err != nil {
+		return err
+	}
+
+	filenames := make([]string, 0, len(pkg.GoFiles)+len(pkg.CgoFiles))
+	filenames = append(filenames, pkg.GoFiles...)
+	filenames = append(filenames, pkg.CgoFiles...)
+
 	optSet := &loadOptionSet{
 		parseTestCode: false,
 	}
@@ -37,26 +64,12 @@ func (i *Instance) LoadDir(dir string, opts ...LoadOption) error {
 		opt(optSet)
 	}
 
-	filenames, err := optSet.getGoFiles(dir)
-	if err != nil {
-		return err
-	}
+	filenames = optSet.filterFiles(filenames)
 
-LoadFile:
 	for _, filename := range filenames {
-		// ignore suffix
-		basename := filepath.Base(filename)
-		for _, suffix := range optSet.ignoreSuffix {
-			if strings.HasSuffix(basename, suffix) {
-				continue LoadFile
-			}
-		}
-
-		file, err := parser.ParseFile(i.fileSet, filename, nil, parser.ParseComments)
-		if err != nil {
+		if err := i.LoadFile(filename); err != nil {
 			return err
 		}
-		i.files = append(i.files, file)
 	}
 
 	return nil
@@ -109,10 +122,10 @@ func (i Instance) Packages() []string {
 	return pkgList
 }
 
-func (i *Instance) Files() []*File {
-	files := make([]*File, 0, len(i.files))
+func (i *Instance) Files() Files {
+	files := make(Files, 0, len(i.files))
 	for _, file := range i.files {
-		files = append(files, createFile(file))
+		files = append(files, NewFile(i, file))
 	}
 
 	return files
@@ -124,6 +137,12 @@ func (i *Instance) File() *File {
 	}
 
 	return nil
+}
+
+func (i *Instance) Decls() {
+	// for _, f := range i.files {
+	// 	f.Decls
+	// }
 }
 
 func (i *Instance) Structs() Structs {
@@ -155,8 +174,8 @@ func (i *Instance) Structs() Structs {
 	return structs
 }
 
-func (i *Instance) Funcs() FuncList {
-	funcs := make(FuncList, 0)
+func (i *Instance) Funcs() Funcs {
+	funcs := make(Funcs, 0)
 	for _, f := range i.files {
 		for _, decl := range f.Decls {
 			funcDecl, ok := decl.(*ast.FuncDecl)
@@ -168,4 +187,13 @@ func (i *Instance) Funcs() FuncList {
 		}
 	}
 	return funcs
+}
+
+func (i *Instance) Types() {
+	// types := make(TypeDefList, 0)
+	// for _, f := range i.files {
+	// 	for _, decl := range f.Decls {
+	// 		TypeDecl
+	// 	}
+	// }
 }

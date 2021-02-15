@@ -28,7 +28,7 @@ func newGetterGenerator(structName string) *getterGenerator {
 }
 
 func (g *getterGenerator) collectParams(aqi *aq.Instance, oldGeneratedCode []byte) error {
-	s := aqi.Structs().FindOne(aq.StructNameIs(g.structName))
+	s := aqi.Structs().Find(aq.StructNameIs(g.structName))
 	if !s.Exists() {
 		return errors.Errorf("struct %#v not found", g.structName)
 	}
@@ -43,7 +43,7 @@ func (g *getterGenerator) createGetterParams(fields aq.Fields) []getterParams {
 	getters := []getterParams{}
 
 	for _, f := range fields {
-		if f.IsPublic() {
+		if f.IsExported() {
 			continue
 		}
 

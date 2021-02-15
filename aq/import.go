@@ -8,12 +8,6 @@ type Import struct {
 	importSpec *ast.ImportSpec
 }
 
-func createImport(importSpec *ast.ImportSpec) *Import {
-	return &Import{
-		importSpec: importSpec,
-	}
-}
-
 func (i *Import) Exists() bool {
 	return i != nil && i.importSpec != nil
 }
@@ -33,5 +27,3 @@ func (i *Import) Path() string {
 
 	return stringLiteral(i.importSpec.Path)
 }
-
-type Imports []*Import

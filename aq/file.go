@@ -3,8 +3,8 @@ package aq
 import "go/ast"
 
 type File struct {
-	instance *Instance
-	file     *ast.File
+	instance *Instance `getter:"-"`
+	file     *ast.File `getter:"-"`
 }
 
 func createFile(file *ast.File) *File {
@@ -22,10 +22,10 @@ func (f *File) Imports() Imports {
 		return nil
 	}
 
-	imports := make([]*Import, 0, len(f.file.Imports))
+	imports := make(Imports, 0, len(f.file.Imports))
 
 	for _, i := range f.file.Imports {
-		imports = append(imports, createImport(i))
+		imports = append(imports, NewImport(i))
 	}
 
 	return imports
@@ -37,4 +37,17 @@ func (f *File) Package() string {
 	}
 
 	return safeIdentName(f.file.Name)
+}
+
+func (f *File) Decls() Decls {
+	l := make(Decls, 0, len(f.file.Decls))
+	for _, decl := range f.file.Decls {
+		l = append(l, NewDecl(decl))
+	}
+
+	return l
+}
+
+func (f *File) Types() {
+	// return f.Decls()
 }

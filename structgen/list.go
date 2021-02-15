@@ -6,6 +6,7 @@ import (
 
 	"github.com/Mushus/gogen/aq"
 	"github.com/Mushus/gogen/goname"
+	"github.com/jinzhu/inflection"
 	"github.com/pkg/errors"
 )
 
@@ -19,15 +20,23 @@ type listParams struct {
 	Type      string
 	TypeUpper string
 	Fields    []listFieldParams
+	Getters   []listGetterParams
 }
 
 type listFieldParams struct {
-	NameUpper   string
-	Name        string
-	Type        string
-	Equalable   bool
-	Compareable bool
-	Pointer     bool
+	NameUpper       string
+	NameUpperPlural string
+	Name            string
+	Type            string
+	Equalable       bool
+	Compareable     bool
+	Pointer         bool
+}
+
+type listGetterParams struct {
+	NameUpperPlural string
+	ListType        string
+	Name            string
 }
 
 func newListGenerator(structName string) *listGenerator {
@@ -37,19 +46,30 @@ func newListGenerator(structName string) *listGenerator {
 }
 
 func (g *listGenerator) collectParams(aqi *aq.Instance, oldGeneratedCode []byte) error {
-	s := aqi.Structs().FindOne(aq.StructNameIs(g.structName))
+	s := aqi.Structs().Find(aq.StructNameIs(g.structName))
 	if !s.Exists() {
 		return errors.Errorf("struct %#v not found", g.structName)
 	}
 
-	listName := g.structName + "List"
+	sn := g.structName
+	listName := inflection.Plural(sn)
+	if sn == listName {
+		listName = sn + "List"
+	}
 	typ := g.structName
+
+	getters := aqi.Funcs().Filter(func(i int, v *aq.Func) bool {
+		return v.Recv().Type().UnwrapPtr().Name() == typ &&
+			v.Params().Count() == 0 &&
+			v.Results().Count() == 1
+	})
 
 	g.params = listParams{
 		ListName:  listName,
 		Type:      typ,
 		TypeUpper: goname.UpperCamelCase(typ),
 		Fields:    createListFieldParams(s.Fields()),
+		Getters:   createListGetterParams(getters),
 	}
 	return nil
 }
@@ -57,15 +77,55 @@ func (g *listGenerator) collectParams(aqi *aq.Instance, oldGeneratedCode []byte)
 func createListFieldParams(fields aq.Fields) []listFieldParams {
 	list := []listFieldParams{}
 	for _, f := range fields {
+		getter := newTagValue(f.Tag().Body().Get("getter"))
+		if getter.contains("-") {
+			continue
+		}
+
 		name := f.Name()
-		typ := f.Type().Name()
+		typ := f.Type().UnwrapPtr().GoCode()
+
+		nameUpper := goname.UpperCamelCase(name)
+		nameUpperPlural := inflection.Plural(nameUpper)
+		if nameUpperPlural == nameUpper {
+			nameUpperPlural = nameUpper + "List"
+		}
+
 		list = append(list, listFieldParams{
-			NameUpper:   goname.UpperCamelCase(name),
-			Name:        name,
-			Type:        typ,
-			Equalable:   equalableType[typ],
-			Compareable: compareableType[typ],
-			Pointer:     f.Type().IsPtr(),
+			NameUpper:       nameUpper,
+			NameUpperPlural: nameUpperPlural,
+			Name:            name,
+			Type:            f.Type().GoCode(),
+			Equalable:       equalableType[typ],
+			Compareable:     compareableType[typ],
+			Pointer:         f.Type().IsPtr(),
+		})
+	}
+
+	return list
+}
+
+func createListGetterParams(funcs aq.Funcs) []listGetterParams {
+	list := []listGetterParams{}
+
+	for _, f := range funcs {
+		name := f.Name()
+		if lgnoreGetters[name] {
+			continue
+		}
+
+		nameUpper := goname.UpperCamelCase(name)
+		nameUpperPlural := inflection.Plural(nameUpper)
+		if nameUpperPlural == nameUpper {
+			nameUpperPlural = nameUpper + "List"
+		}
+
+		typ := "[]" + f.Results().First().Type().GoCode()
+
+		list = append(list, listGetterParams{
+			Name:            f.Name(),
+			ListType:        typ,
+			NameUpperPlural: f.Name(),
 		})
 	}
 
@@ -114,6 +174,10 @@ var compareableType = map[string]bool{
 	"complex128": true,
 }
 
+var lgnoreGetters = map[string]bool{
+	"Exists": true,
+}
+
 const listTmplStr = `
 type {{ .ListName }} []*{{ .Type }}
 
@@ -133,8 +197,18 @@ func (r {{ .ListName }}) Chunk(size int) []{{ .ListName }} {
 	return list
 }
 
-func (r {{ .ListName }}) Concat(list {{ .ListName }}) {{ .ListName }} {
-	return append(append({{ .ListName }}{}, r...), list...)
+func (r {{ .ListName }}) Compact() {{ .ListName }} {
+	l := {{ .ListName }}{}
+	for _, v := range r {
+		if v == nil {
+			l = append(l, v)
+		}
+	}
+	return l
+}
+
+func (r {{ .ListName }}) Concat(l {{ .ListName }}) {{ .ListName }} {
+	return append(append({{ .ListName }}{}, r...), l...)
 }
 
 func (r {{ .ListName }}) Copy() {{ .ListName }} {
@@ -229,6 +303,10 @@ func (r {{ .ListName }}) Get(i int) *{{ .Type }} {
 	return nil
 }
 
+func (r {{ .ListName }}) Has(f func(i int, v *{{ .Type }}) bool) bool {
+	return r.Some(f)
+}
+
 func (r {{ .ListName }}) IsEmpty() bool {
 	return len(r) == 0
 }
@@ -268,9 +346,18 @@ func (r {{ .ListName }}) Take(size int) {{ .ListName }} {
 	return r[:size]
 }
 
+{{- $listName := .ListName }}
 {{- $typeUpper := .TypeUpper }}
 {{- $type := .Type }}
 {{- range .Fields }}
+
+func (r {{ $listName }}) {{ .NameUpperPlural }}() []{{ .Type }} {
+ 	l := make([]{{ .Type }}, 0, len(r))
+ 	for _, r := range r {
+ 		l = append(l, r.{{ .Name }})
+ 	}
+ 	return l
+}
 {{- if .Equalable}}
 
 func {{ $typeUpper }}{{ .NameUpper }}Is(value {{ .Type }}) func(i int, v *{{ $type }}) bool {
@@ -311,6 +398,16 @@ func {{ $typeUpper }}{{ .NameUpper }}LE(value {{ .Type }}) func(i int, v *{{ $ty
 	}
 }
 {{- end }}
+{{- end }}
+{{- range .Getters }}
+
+func (r {{ $listName }}) {{ .NameUpperPlural }}() {{ .ListType }} {
+ 	l := make({{ .ListType }}, 0, len(r))
+ 	for _, r := range r {
+ 		l = append(l, r.{{ .Name }}())
+ 	}
+ 	return l
+}
 {{- end }}
 `
 

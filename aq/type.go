@@ -18,23 +18,37 @@ func createType(typ ast.Expr) *Type {
 }
 
 func (t *Type) Name() string {
-	expr := t.typ
-	if star, ok := t.typ.(*ast.StarExpr); ok {
-		expr = star.X
+	if t == nil {
+		return ""
 	}
-	if ident, ok := expr.(*ast.Ident); ok {
-		return safeIdentName(ident)
-	}
-	return ""
+	buf := new(bytes.Buffer)
+	_ = format.Node(buf, token.NewFileSet(), t.typ)
+	return buf.String()
 }
 
 func (t *Type) GoCode() string {
+	if t == nil {
+		return ""
+	}
 	buf := new(bytes.Buffer)
 	_ = format.Node(buf, token.NewFileSet(), t.typ)
 	return buf.String()
 }
 
 func (t *Type) IsPtr() bool {
+	if t == nil {
+		return false
+	}
 	_, ok := t.typ.(*ast.StarExpr)
 	return ok
+}
+
+func (t *Type) UnwrapPtr() *Type {
+	if t == nil {
+		return nil
+	}
+	if star, ok := t.typ.(*ast.StarExpr); ok {
+		return createType(star.X)
+	}
+	return t
 }

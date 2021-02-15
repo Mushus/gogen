@@ -6,26 +6,26 @@ import (
 	"go/ast"
 )
 
-func NewFunc(
-	decl *ast.FuncDecl,
-) *Func {
-	c := &Func{
-		decl: decl,
+func NewFuncType(
+	typ *ast.FuncType,
+) *FuncType {
+	c := &FuncType{
+		typ: typ,
 	}
 
 	return c
 }
 
-type Funcs []*Func
+type FuncTypes []*FuncType
 
-func (r Funcs) Chunk(size int) []Funcs {
-	list := []Funcs{}
-	chunk := Funcs{}
+func (r FuncTypes) Chunk(size int) []FuncTypes {
+	list := []FuncTypes{}
+	chunk := FuncTypes{}
 	for _, v := range r {
 		chunk := append(chunk, v)
 		if len(chunk) >= size {
 			list = append(list, chunk)
-			chunk = Funcs{}
+			chunk = FuncTypes{}
 		}
 	}
 	if len(chunk) > 0 {
@@ -34,8 +34,8 @@ func (r Funcs) Chunk(size int) []Funcs {
 	return list
 }
 
-func (r Funcs) Compact() Funcs {
-	l := Funcs{}
+func (r FuncTypes) Compact() FuncTypes {
+	l := FuncTypes{}
 	for _, v := range r {
 		if v == nil {
 			l = append(l, v)
@@ -44,31 +44,31 @@ func (r Funcs) Compact() Funcs {
 	return l
 }
 
-func (r Funcs) Concat(l Funcs) Funcs {
-	return append(append(Funcs{}, r...), l...)
+func (r FuncTypes) Concat(l FuncTypes) FuncTypes {
+	return append(append(FuncTypes{}, r...), l...)
 }
 
-func (r Funcs) Copy() Funcs {
-	dist := make(Funcs, len(r))
+func (r FuncTypes) Copy() FuncTypes {
+	dist := make(FuncTypes, len(r))
 	copy(dist, r)
 	return dist
 }
 
-func (r Funcs) Count() int {
+func (r FuncTypes) Count() int {
 	return len(r)
 }
 
-func (r Funcs) Each(f func(i int, v *Func)) {
+func (r FuncTypes) Each(f func(i int, v *FuncType)) {
 	for i, v := range r {
 		f(i, v)
 	}
 }
 
-func (r Funcs) Exists() bool {
+func (r FuncTypes) Exists() bool {
 	return r != nil && len(r) > 0
 }
 
-func (r Funcs) Every(f func(i int, v *Func) bool) bool {
+func (r FuncTypes) Every(f func(i int, v *FuncType) bool) bool {
 	for i, v := range r {
 		if !f(i, v) {
 			return false
@@ -77,8 +77,8 @@ func (r Funcs) Every(f func(i int, v *Func) bool) bool {
 	return true
 }
 
-func (r Funcs) Filter(funcs ...func(i int, v *Func) bool) Funcs {
-	list := Funcs{}
+func (r FuncTypes) Filter(funcs ...func(i int, v *FuncType) bool) FuncTypes {
+	list := FuncTypes{}
 L:
 	for i, v := range r {
 		for _, f := range funcs {
@@ -91,7 +91,7 @@ L:
 	return list
 }
 
-func (r Funcs) Find(funcs ...func(i int, v *Func) bool) *Func {
+func (r FuncTypes) Find(funcs ...func(i int, v *FuncType) bool) *FuncType {
 L:
 	for i, v := range r {
 		for _, f := range funcs {
@@ -104,7 +104,7 @@ L:
 	return nil
 }
 
-func (r Funcs) FindIndex(funcs ...func(i int, v *Func) bool) int {
+func (r FuncTypes) FindIndex(funcs ...func(i int, v *FuncType) bool) int {
 L:
 	for i, v := range r {
 		for _, f := range funcs {
@@ -117,57 +117,57 @@ L:
 	return -1
 }
 
-func (r Funcs) First() *Func {
+func (r FuncTypes) First() *FuncType {
 	if len(r) == 0 {
 		return nil
 	}
 	return r[0]
 }
 
-func (r Funcs) ForPage(pageNo int, size int) Funcs {
+func (r FuncTypes) ForPage(pageNo int, size int) FuncTypes {
 	rLen := len(r)
-	list := make(Funcs, 0, size)
+	list := make(FuncTypes, 0, size)
 	for i, k := pageNo*size, 0; i < rLen && k < size; i, k = i+1, k+1 {
 		list = append(list, r[i])
 	}
 	return list
 }
 
-func (r Funcs) Get(i int) *Func {
+func (r FuncTypes) Get(i int) *FuncType {
 	if 0 <= i && i < len(r) {
 		return r[i]
 	}
 	return nil
 }
 
-func (r Funcs) Has(f func(i int, v *Func) bool) bool {
+func (r FuncTypes) Has(f func(i int, v *FuncType) bool) bool {
 	return r.Some(f)
 }
 
-func (r Funcs) IsEmpty() bool {
+func (r FuncTypes) IsEmpty() bool {
 	return len(r) == 0
 }
 
-func (r Funcs) IsNotEmpty() bool {
+func (r FuncTypes) IsNotEmpty() bool {
 	return len(r) > 0
 }
 
-func (r Funcs) Last() *Func {
+func (r FuncTypes) Last() *FuncType {
 	if len(r) == 0 {
 		return nil
 	}
 	return r[len(r)-1]
 }
 
-func (r Funcs) Reverse() Funcs {
-	list := make(Funcs, 0, len(r))
+func (r FuncTypes) Reverse() FuncTypes {
+	list := make(FuncTypes, 0, len(r))
 	for i := len(r) - 1; i >= 0; i-- {
 		list = append(list, r[i])
 	}
 	return list
 }
 
-func (r Funcs) Some(f func(i int, v *Func) bool) bool {
+func (r FuncTypes) Some(f func(i int, v *FuncType) bool) bool {
 	for i, v := range r {
 		if f(i, v) {
 			return true
@@ -176,38 +176,22 @@ func (r Funcs) Some(f func(i int, v *Func) bool) bool {
 	return false
 }
 
-func (r Funcs) Take(size int) Funcs {
+func (r FuncTypes) Take(size int) FuncTypes {
 	if len(r) > size {
 		return r
 	}
 	return r[:size]
 }
 
-func (r Funcs) Name() []string {
-	l := make([]string, 0, len(r))
+func (r FuncTypes) Typs() []*ast.FuncType {
+	l := make([]*ast.FuncType, 0, len(r))
 	for _, r := range r {
-		l = append(l, r.Name())
+		l = append(l, r.typ)
 	}
 	return l
 }
 
-func (r Funcs) Recv() []*Field {
-	l := make([]*Field, 0, len(r))
-	for _, r := range r {
-		l = append(l, r.Recv())
-	}
-	return l
-}
-
-func (r Funcs) Type() []*FuncType {
-	l := make([]*FuncType, 0, len(r))
-	for _, r := range r {
-		l = append(l, r.Type())
-	}
-	return l
-}
-
-func (r Funcs) Params() []Fields {
+func (r FuncTypes) Params() []Fields {
 	l := make([]Fields, 0, len(r))
 	for _, r := range r {
 		l = append(l, r.Params())
@@ -215,7 +199,7 @@ func (r Funcs) Params() []Fields {
 	return l
 }
 
-func (r Funcs) Results() []Fields {
+func (r FuncTypes) Results() []Fields {
 	l := make([]Fields, 0, len(r))
 	for _, r := range r {
 		l = append(l, r.Results())

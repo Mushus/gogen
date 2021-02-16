@@ -29,7 +29,7 @@ func newConstructGenerator(structName string) *constructGenerator {
 	}
 }
 
-func (g *constructGenerator) collectParams(aqi *aq.Instance, oldGeneratedCode []byte) error {
+func (g *constructGenerator) collectParams(aqi *aq.AQ, oldGeneratedCode []byte) error {
 	if g == nil {
 		return nil
 	}
@@ -60,7 +60,7 @@ func (g *constructGenerator) collectParams(aqi *aq.Instance, oldGeneratedCode []
 	{
 		g.params.HasConstructMethod = aqi.
 			Funcs().
-			Some(func(i int, v *aq.Func) bool {
+			Some(func(i int, v *aq.FuncDecl) bool {
 				return v.Name() == "construct" &&
 					v.Recv().Type().Name() == g.structName &&
 					v.Recv().Type().IsPtr()

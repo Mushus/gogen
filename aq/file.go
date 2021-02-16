@@ -3,51 +3,51 @@ package aq
 import "go/ast"
 
 type File struct {
-	instance *Instance `getter:"-"`
-	file     *ast.File `getter:"-"`
-}
-
-func createFile(file *ast.File) *File {
-	return &File{
-		file: file,
-	}
+	aq   *AQ       `getter:"-"`
+	file *ast.File `getter:"-"`
 }
 
 func (f *File) Exists() bool {
 	return f != nil
 }
 
-func (f *File) Imports() Imports {
-	if !f.Exists() {
+func (f *File) Imports() ImportSpecs {
+	if f == nil {
 		return nil
 	}
 
-	imports := make(Imports, 0, len(f.file.Imports))
-
+	l := make(ImportSpecs, 0, len(f.file.Imports))
 	for _, i := range f.file.Imports {
-		imports = append(imports, NewImport(i))
+		l = append(l, NewImportSpec(i))
 	}
 
-	return imports
+	return l
 }
 
 func (f *File) Package() string {
-	if !f.Exists() {
+	if f == nil {
 		return ""
 	}
 
 	return safeIdentName(f.file.Name)
 }
 
-func (f *File) Decls() Decls {
-	l := make(Decls, 0, len(f.file.Decls))
-	for _, decl := range f.file.Decls {
-		l = append(l, NewDecl(decl))
+func (f *File) Types() TypeSpecs {
+	if f == nil {
+		return nil
+	}
+
+	l := make(TypeSpecs, 0, len(f.file.Scope.Objects))
+	for _, o := range f.file.Scope.Objects {
+		ts, ok := o.Decl.(*ast.TypeSpec)
+		if ok {
+			l = append(l, NewTypeSpec(f.aq, f, ts))
+		}
 	}
 
 	return l
 }
 
-func (f *File) Types() {
-	// return f.Decls()
+func (f *File) Structs() Structs {
+	return f.Types().Structs()
 }

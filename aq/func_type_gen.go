@@ -190,19 +190,3 @@ func (r FuncTypes) Typs() []*ast.FuncType {
 	}
 	return l
 }
-
-func (r FuncTypes) Params() []Fields {
-	l := make([]Fields, 0, len(r))
-	for _, r := range r {
-		l = append(l, r.Params())
-	}
-	return l
-}
-
-func (r FuncTypes) Results() []Fields {
-	l := make([]Fields, 0, len(r))
-	for _, r := range r {
-		l = append(l, r.Results())
-	}
-	return l
-}

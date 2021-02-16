@@ -8,7 +8,8 @@ import (
 )
 
 type Type struct {
-	typ ast.Expr
+	instance *AQ      `getter:"-"`
+	typ      ast.Expr `getter:"-"`
 }
 
 func createType(typ ast.Expr) *Type {

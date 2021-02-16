@@ -7,12 +7,12 @@ import (
 )
 
 func NewFile(
-	instance *Instance,
+	aq *AQ,
 	file *ast.File,
 ) *File {
 	c := &File{
-		instance: instance,
-		file:     file,
+		aq:   aq,
+		file: file,
 	}
 
 	return c
@@ -185,26 +185,10 @@ func (r Files) Take(size int) Files {
 	return r[:size]
 }
 
-func (r Files) Imports() []Imports {
-	l := make([]Imports, 0, len(r))
+func (r Files) TypesList() []TypeSpecs {
+	l := make([]TypeSpecs, 0, len(r))
 	for _, r := range r {
-		l = append(l, r.Imports())
-	}
-	return l
-}
-
-func (r Files) Package() []string {
-	l := make([]string, 0, len(r))
-	for _, r := range r {
-		l = append(l, r.Package())
-	}
-	return l
-}
-
-func (r Files) Decls() []Decls {
-	l := make([]Decls, 0, len(r))
-	for _, r := range r {
-		l = append(l, r.Decls())
+		l = append(l, r.Types())
 	}
 	return l
 }

@@ -5,7 +5,7 @@ import (
 )
 
 type Struct struct {
-	instance   *Instance
+	instance   *AQ
 	file       *File
 	typeSpec   *ast.TypeSpec
 	structType *ast.StructType

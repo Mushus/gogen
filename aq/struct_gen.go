@@ -7,7 +7,7 @@ import (
 )
 
 func NewStruct(
-	instance *Instance,
+	instance *AQ,
 	file *File,
 	typeSpec *ast.TypeSpec,
 	structType *ast.StructType,
@@ -189,8 +189,8 @@ func (r Structs) Take(size int) Structs {
 	return r[:size]
 }
 
-func (r Structs) Instances() []*Instance {
-	l := make([]*Instance, 0, len(r))
+func (r Structs) Instances() []*AQ {
+	l := make([]*AQ, 0, len(r))
 	for _, r := range r {
 		l = append(l, r.instance)
 	}
@@ -217,30 +217,6 @@ func (r Structs) StructTypes() []*ast.StructType {
 	l := make([]*ast.StructType, 0, len(r))
 	for _, r := range r {
 		l = append(l, r.structType)
-	}
-	return l
-}
-
-func (r Structs) File() []*File {
-	l := make([]*File, 0, len(r))
-	for _, r := range r {
-		l = append(l, r.File())
-	}
-	return l
-}
-
-func (r Structs) Name() []string {
-	l := make([]string, 0, len(r))
-	for _, r := range r {
-		l = append(l, r.Name())
-	}
-	return l
-}
-
-func (r Structs) Fields() []Fields {
-	l := make([]Fields, 0, len(r))
-	for _, r := range r {
-		l = append(l, r.Fields())
 	}
 	return l
 }

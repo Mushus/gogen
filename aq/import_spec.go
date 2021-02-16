@@ -4,15 +4,15 @@ import (
 	"go/ast"
 )
 
-type Import struct {
-	importSpec *ast.ImportSpec
+type ImportSpec struct {
+	importSpec *ast.ImportSpec `getter:"-"`
 }
 
-func (i *Import) Exists() bool {
+func (i *ImportSpec) Exists() bool {
 	return i != nil && i.importSpec != nil
 }
 
-func (i *Import) Name() string {
+func (i *ImportSpec) Name() string {
 	if !i.Exists() {
 		return ""
 	}
@@ -20,7 +20,7 @@ func (i *Import) Name() string {
 	return safeIdentName(i.importSpec.Name)
 }
 
-func (i *Import) Path() string {
+func (i *ImportSpec) Path() string {
 	if !i.Exists() {
 		return ""
 	}

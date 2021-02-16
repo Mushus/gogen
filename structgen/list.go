@@ -34,9 +34,9 @@ type listFieldParams struct {
 }
 
 type listGetterParams struct {
-	NameUpperPlural string
-	ListType        string
-	Name            string
+	ListFuncName string
+	ListType     string
+	Name         string
 }
 
 func newListGenerator(structName string) *listGenerator {
@@ -45,7 +45,7 @@ func newListGenerator(structName string) *listGenerator {
 	}
 }
 
-func (g *listGenerator) collectParams(aqi *aq.Instance, oldGeneratedCode []byte) error {
+func (g *listGenerator) collectParams(aqi *aq.AQ, oldGeneratedCode []byte) error {
 	s := aqi.Structs().Find(aq.StructNameIs(g.structName))
 	if !s.Exists() {
 		return errors.Errorf("struct %#v not found", g.structName)
@@ -58,18 +58,12 @@ func (g *listGenerator) collectParams(aqi *aq.Instance, oldGeneratedCode []byte)
 	}
 	typ := g.structName
 
-	getters := aqi.Funcs().Filter(func(i int, v *aq.Func) bool {
-		return v.Recv().Type().UnwrapPtr().Name() == typ &&
-			v.Params().Count() == 0 &&
-			v.Results().Count() == 1
-	})
-
 	g.params = listParams{
 		ListName:  listName,
 		Type:      typ,
 		TypeUpper: goname.UpperCamelCase(typ),
 		Fields:    createListFieldParams(s.Fields()),
-		Getters:   createListGetterParams(getters),
+		Getters:   createListGetterParams(aqi, listName, typ),
 	}
 	return nil
 }
@@ -105,27 +99,42 @@ func createListFieldParams(fields aq.Fields) []listFieldParams {
 	return list
 }
 
-func createListGetterParams(funcs aq.Funcs) []listGetterParams {
-	list := []listGetterParams{}
+func createListGetterParams(aqi *aq.AQ, listName string, typ string) []listGetterParams {
 
-	for _, f := range funcs {
+	funcs := aqi.Funcs()
+	getters := funcs.Filter(func(i int, v *aq.FuncDecl) bool {
+		return v.Recv().Type().UnwrapPtr().Name() == typ &&
+			v.Params().Count() == 0 &&
+			v.Results().Count() == 1
+	})
+
+	listGetters := funcs.Filter(func(i int, v *aq.FuncDecl) bool {
+		return v.Recv().Type().UnwrapPtr().Name() == listName
+	})
+
+	list := []listGetterParams{}
+	for _, f := range getters {
 		name := f.Name()
 		if lgnoreGetters[name] {
 			continue
 		}
 
 		nameUpper := goname.UpperCamelCase(name)
-		nameUpperPlural := inflection.Plural(nameUpper)
-		if nameUpperPlural == nameUpper {
-			nameUpperPlural = nameUpper + "List"
+		listFuncName := inflection.Plural(nameUpper)
+		if listFuncName == nameUpper {
+			listFuncName = nameUpper + "List"
+		}
+
+		if listGetters.Has(func(i int, v *aq.FuncDecl) bool { return v.Name() == listFuncName }) {
+			continue
 		}
 
 		typ := "[]" + f.Results().First().Type().GoCode()
 
 		list = append(list, listGetterParams{
-			Name:            f.Name(),
-			ListType:        typ,
-			NameUpperPlural: f.Name(),
+			Name:         f.Name(),
+			ListType:     typ,
+			ListFuncName: listFuncName,
 		})
 	}
 
@@ -401,7 +410,7 @@ func {{ $typeUpper }}{{ .NameUpper }}LE(value {{ .Type }}) func(i int, v *{{ $ty
 {{- end }}
 {{- range .Getters }}
 
-func (r {{ $listName }}) {{ .NameUpperPlural }}() {{ .ListType }} {
+func (r {{ $listName }}) {{ .ListFuncName }}() {{ .ListType }} {
  	l := make({{ .ListType }}, 0, len(r))
  	for _, r := range r {
  		l = append(l, r.{{ .Name }}())

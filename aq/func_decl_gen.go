@@ -6,26 +6,26 @@ import (
 	"go/ast"
 )
 
-func NewTypeDef(
-	spec *ast.TypeSpec,
-) *TypeDef {
-	c := &TypeDef{
-		spec: spec,
+func NewFuncDecl(
+	decl *ast.FuncDecl,
+) *FuncDecl {
+	c := &FuncDecl{
+		decl: decl,
 	}
 
 	return c
 }
 
-type TypeDefs []*TypeDef
+type FuncDecls []*FuncDecl
 
-func (r TypeDefs) Chunk(size int) []TypeDefs {
-	list := []TypeDefs{}
-	chunk := TypeDefs{}
+func (r FuncDecls) Chunk(size int) []FuncDecls {
+	list := []FuncDecls{}
+	chunk := FuncDecls{}
 	for _, v := range r {
 		chunk := append(chunk, v)
 		if len(chunk) >= size {
 			list = append(list, chunk)
-			chunk = TypeDefs{}
+			chunk = FuncDecls{}
 		}
 	}
 	if len(chunk) > 0 {
@@ -34,8 +34,8 @@ func (r TypeDefs) Chunk(size int) []TypeDefs {
 	return list
 }
 
-func (r TypeDefs) Compact() TypeDefs {
-	l := TypeDefs{}
+func (r FuncDecls) Compact() FuncDecls {
+	l := FuncDecls{}
 	for _, v := range r {
 		if v == nil {
 			l = append(l, v)
@@ -44,31 +44,31 @@ func (r TypeDefs) Compact() TypeDefs {
 	return l
 }
 
-func (r TypeDefs) Concat(l TypeDefs) TypeDefs {
-	return append(append(TypeDefs{}, r...), l...)
+func (r FuncDecls) Concat(l FuncDecls) FuncDecls {
+	return append(append(FuncDecls{}, r...), l...)
 }
 
-func (r TypeDefs) Copy() TypeDefs {
-	dist := make(TypeDefs, len(r))
+func (r FuncDecls) Copy() FuncDecls {
+	dist := make(FuncDecls, len(r))
 	copy(dist, r)
 	return dist
 }
 
-func (r TypeDefs) Count() int {
+func (r FuncDecls) Count() int {
 	return len(r)
 }
 
-func (r TypeDefs) Each(f func(i int, v *TypeDef)) {
+func (r FuncDecls) Each(f func(i int, v *FuncDecl)) {
 	for i, v := range r {
 		f(i, v)
 	}
 }
 
-func (r TypeDefs) Exists() bool {
+func (r FuncDecls) Exists() bool {
 	return r != nil && len(r) > 0
 }
 
-func (r TypeDefs) Every(f func(i int, v *TypeDef) bool) bool {
+func (r FuncDecls) Every(f func(i int, v *FuncDecl) bool) bool {
 	for i, v := range r {
 		if !f(i, v) {
 			return false
@@ -77,8 +77,8 @@ func (r TypeDefs) Every(f func(i int, v *TypeDef) bool) bool {
 	return true
 }
 
-func (r TypeDefs) Filter(funcs ...func(i int, v *TypeDef) bool) TypeDefs {
-	list := TypeDefs{}
+func (r FuncDecls) Filter(funcs ...func(i int, v *FuncDecl) bool) FuncDecls {
+	list := FuncDecls{}
 L:
 	for i, v := range r {
 		for _, f := range funcs {
@@ -91,7 +91,7 @@ L:
 	return list
 }
 
-func (r TypeDefs) Find(funcs ...func(i int, v *TypeDef) bool) *TypeDef {
+func (r FuncDecls) Find(funcs ...func(i int, v *FuncDecl) bool) *FuncDecl {
 L:
 	for i, v := range r {
 		for _, f := range funcs {
@@ -104,7 +104,7 @@ L:
 	return nil
 }
 
-func (r TypeDefs) FindIndex(funcs ...func(i int, v *TypeDef) bool) int {
+func (r FuncDecls) FindIndex(funcs ...func(i int, v *FuncDecl) bool) int {
 L:
 	for i, v := range r {
 		for _, f := range funcs {
@@ -117,57 +117,57 @@ L:
 	return -1
 }
 
-func (r TypeDefs) First() *TypeDef {
+func (r FuncDecls) First() *FuncDecl {
 	if len(r) == 0 {
 		return nil
 	}
 	return r[0]
 }
 
-func (r TypeDefs) ForPage(pageNo int, size int) TypeDefs {
+func (r FuncDecls) ForPage(pageNo int, size int) FuncDecls {
 	rLen := len(r)
-	list := make(TypeDefs, 0, size)
+	list := make(FuncDecls, 0, size)
 	for i, k := pageNo*size, 0; i < rLen && k < size; i, k = i+1, k+1 {
 		list = append(list, r[i])
 	}
 	return list
 }
 
-func (r TypeDefs) Get(i int) *TypeDef {
+func (r FuncDecls) Get(i int) *FuncDecl {
 	if 0 <= i && i < len(r) {
 		return r[i]
 	}
 	return nil
 }
 
-func (r TypeDefs) Has(f func(i int, v *TypeDef) bool) bool {
+func (r FuncDecls) Has(f func(i int, v *FuncDecl) bool) bool {
 	return r.Some(f)
 }
 
-func (r TypeDefs) IsEmpty() bool {
+func (r FuncDecls) IsEmpty() bool {
 	return len(r) == 0
 }
 
-func (r TypeDefs) IsNotEmpty() bool {
+func (r FuncDecls) IsNotEmpty() bool {
 	return len(r) > 0
 }
 
-func (r TypeDefs) Last() *TypeDef {
+func (r FuncDecls) Last() *FuncDecl {
 	if len(r) == 0 {
 		return nil
 	}
 	return r[len(r)-1]
 }
 
-func (r TypeDefs) Reverse() TypeDefs {
-	list := make(TypeDefs, 0, len(r))
+func (r FuncDecls) Reverse() FuncDecls {
+	list := make(FuncDecls, 0, len(r))
 	for i := len(r) - 1; i >= 0; i-- {
 		list = append(list, r[i])
 	}
 	return list
 }
 
-func (r TypeDefs) Some(f func(i int, v *TypeDef) bool) bool {
+func (r FuncDecls) Some(f func(i int, v *FuncDecl) bool) bool {
 	for i, v := range r {
 		if f(i, v) {
 			return true
@@ -176,17 +176,9 @@ func (r TypeDefs) Some(f func(i int, v *TypeDef) bool) bool {
 	return false
 }
 
-func (r TypeDefs) Take(size int) TypeDefs {
+func (r FuncDecls) Take(size int) FuncDecls {
 	if len(r) > size {
 		return r
 	}
 	return r[:size]
-}
-
-func (r TypeDefs) Specs() []*ast.TypeSpec {
-	l := make([]*ast.TypeSpec, 0, len(r))
-	for _, r := range r {
-		l = append(l, r.spec)
-	}
-	return l
 }

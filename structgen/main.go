@@ -63,7 +63,7 @@ func main() {
 	gens := createGenerators(gt)
 
 	if err := collectParams(gens); err != nil {
-		log.Fatalln("failed collect params: ", err)
+		log.Fatalln("failed collect params:", err)
 	}
 
 	if err := generate(gens); err != nil {

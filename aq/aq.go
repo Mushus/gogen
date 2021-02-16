@@ -5,49 +5,87 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
+	"path/filepath"
 )
 
-//go:generate go run github.com/Mushus/gogen/structgen -construct Decl,Field,File,Func,FuncType,Import,Struct,TypeDef,Decl -list Decl,Field,File,Func,FuncType,Import,Struct,TypeDef,Decl
+//go:generate go run github.com/Mushus/gogen/structgen -construct Field,File,FuncDecl,FuncType,ImportSpec,Interface,Struct,TypeSpec -list Field,File,FuncDecl,FuncType,ImportSpec,Interface,Struct,TypeSpec
 
-type Instance struct {
+type AQ struct {
 	fileSet *token.FileSet
 	files   []*ast.File
 }
 
-func New() *Instance {
+func New() *AQ {
 	fileSet := token.NewFileSet()
 
-	return &Instance{
+	return &AQ{
 		fileSet: fileSet,
 	}
 }
 
-func (i *Instance) MustLoadFile(filename string) *Instance {
-	err := i.LoadDir(filename)
+func LoadFile(filename string) (*AQ, error) {
+	a := New()
+	err := a.LoadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	return a, nil
+}
+
+func MustLoadFile(filename string) *AQ {
+	a, err := LoadFile(filename)
 	if err != nil {
 		panic(err)
 	}
-	return i
+
+	return a
 }
 
-func (i *Instance) LoadFile(filename string) error {
-	file, err := parser.ParseFile(i.fileSet, filename, nil, parser.ParseComments)
+func (a *AQ) MustLoadFile(filename string) *AQ {
+	err := a.LoadDir(filename)
+	if err != nil {
+		panic(err)
+	}
+	return a
+}
+
+func (a *AQ) LoadFile(filename string) error {
+	file, err := parser.ParseFile(a.fileSet, filename, nil, parser.ParseComments)
 	if err != nil {
 		return err
 	}
-	i.files = append(i.files, file)
+	a.files = append(a.files, file)
 	return nil
 }
 
-func (i *Instance) MustLoadDir(dir string, opts ...LoadOption) *Instance {
-	err := i.LoadDir(dir, opts...)
+func MustLoadDir(dir string, opts ...LoadOption) *AQ {
+	a, err := LoadDir(dir, opts...)
 	if err != nil {
 		panic(err)
 	}
-	return i
+
+	return a
 }
 
-func (i *Instance) LoadDir(dir string, opts ...LoadOption) error {
+func LoadDir(dir string, opts ...LoadOption) (*AQ, error) {
+	a := New()
+	err := a.LoadDir(dir, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return a, nil
+}
+
+func (a *AQ) MustLoadDir(dir string, opts ...LoadOption) *AQ {
+	err := a.LoadDir(dir, opts...)
+	if err != nil {
+		panic(err)
+	}
+	return a
+}
+
+func (a *AQ) LoadDir(dir string, opts ...LoadOption) error {
 	pkg, err := build.ImportDir(dir, 0)
 	if err != nil {
 		return err
@@ -67,7 +105,7 @@ func (i *Instance) LoadDir(dir string, opts ...LoadOption) error {
 	filenames = optSet.filterFiles(filenames)
 
 	for _, filename := range filenames {
-		if err := i.LoadFile(filename); err != nil {
+		if err := a.LoadFile(filename); err != nil {
 			return err
 		}
 	}
@@ -75,25 +113,71 @@ func (i *Instance) LoadDir(dir string, opts ...LoadOption) error {
 	return nil
 }
 
-func (i *Instance) MustLoadFromSource(source []byte) *Instance {
-	err := i.LoadFromSource(source)
+func MustImport(targetPackage string, path string) *AQ {
+	a, err := Import(targetPackage, path)
 	if err != nil {
 		panic(err)
 	}
-	return i
+	return a
 }
 
-func (i *Instance) LoadFromSource(source []byte) error {
-	file, err := parser.ParseFile(i.fileSet, "", source, parser.ParseComments)
-	if err != nil {
-		return err
+func Import(targetPackage string, path string) (*AQ, error) {
+	a := New()
+
+	if err := a.Import(targetPackage, path); err != nil {
+		return nil, err
 	}
-	i.files = append(i.files, file)
+
+	return a, nil
+}
+
+func (a *AQ) MustImport(targetPackage string, path string) error {
+	if err := a.Import(targetPackage, path); err != nil {
+		panic(err)
+	}
 	return nil
 }
 
-func (i Instance) Package() string {
-	for _, file := range i.files {
+func (a *AQ) Import(targetPackage string, path string) error {
+	pkg, err := build.Import(targetPackage, path, 0)
+	if err != nil {
+		return err
+	}
+
+	dir := pkg.Dir
+
+	files := []string{}
+	files = append(files, pkg.GoFiles...)
+	files = append(files, pkg.CgoFiles...)
+
+	for _, f := range files {
+		if err := a.LoadFile(filepath.Join(dir, f)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (a *AQ) MustLoadFromSource(source []byte) *AQ {
+	err := a.LoadFromSource(source)
+	if err != nil {
+		panic(err)
+	}
+	return a
+}
+
+func (a *AQ) LoadFromSource(source []byte) error {
+	file, err := parser.ParseFile(a.fileSet, "", source, parser.ParseComments)
+	if err != nil {
+		return err
+	}
+	a.files = append(a.files, file)
+	return nil
+}
+
+func (a *AQ) Package() string {
+	for _, file := range a.files {
 		if file.Name == nil {
 			continue
 		}
@@ -103,7 +187,7 @@ func (i Instance) Package() string {
 	return ""
 }
 
-func (i Instance) Packages() []string {
+func (i AQ) Packages() []string {
 	pkgMap := map[string]bool{}
 	pkgList := make([]string, 0)
 	for _, file := range i.files {
@@ -122,78 +206,50 @@ func (i Instance) Packages() []string {
 	return pkgList
 }
 
-func (i *Instance) Files() Files {
-	files := make(Files, 0, len(i.files))
-	for _, file := range i.files {
-		files = append(files, NewFile(i, file))
+func (a *AQ) Files() Files {
+	l := make(Files, 0, len(a.files))
+	for _, f := range a.files {
+		l = append(l, NewFile(a, f))
 	}
 
-	return files
+	return l
 }
 
-func (i *Instance) File() *File {
-	for _, file := range i.files {
-		return createFile(file)
+func (a *AQ) File() *File {
+	for _, f := range a.files {
+		return NewFile(a, f)
 	}
 
 	return nil
 }
 
-func (i *Instance) Decls() {
-	// for _, f := range i.files {
-	// 	f.Decls
-	// }
+func (a *AQ) Types() TypeSpecs {
+	l := TypeSpecs{}
+	for _, f := range a.Files() {
+		l = append(l, f.Types()...)
+	}
+	return l
 }
 
-func (i *Instance) Structs() Structs {
-	structs := make(Structs, 0)
-	for _, f := range i.files {
-		aqFile := createFile(f)
+func (a *AQ) Interfaces() Interfaces {
+	return a.Types().Interfaces()
+}
+
+func (a *AQ) Structs() Structs {
+	return a.Types().Structs()
+}
+
+func (a *AQ) Funcs() FuncDecls {
+	l := make(FuncDecls, 0)
+	for _, f := range a.files {
 		for _, decl := range f.Decls {
-			genDecl, ok := decl.(*ast.GenDecl)
+			fd, ok := decl.(*ast.FuncDecl)
 			if !ok {
 				continue
 			}
 
-			for _, spec := range genDecl.Specs {
-				typeSpec, ok := spec.(*ast.TypeSpec)
-				if !ok {
-					continue
-				}
-
-				structType, ok := typeSpec.Type.(*ast.StructType)
-				if !ok {
-					continue
-				}
-
-				structs = append(structs, createStruct(aqFile, typeSpec, structType))
-			}
+			l = append(l, NewFuncDecl(fd))
 		}
 	}
-
-	return structs
-}
-
-func (i *Instance) Funcs() Funcs {
-	funcs := make(Funcs, 0)
-	for _, f := range i.files {
-		for _, decl := range f.Decls {
-			funcDecl, ok := decl.(*ast.FuncDecl)
-			if !ok {
-				continue
-			}
-
-			funcs = append(funcs, createFunc(funcDecl))
-		}
-	}
-	return funcs
-}
-
-func (i *Instance) Types() {
-	// types := make(TypeDefList, 0)
-	// for _, f := range i.files {
-	// 	for _, decl := range f.Decls {
-	// 		TypeDecl
-	// 	}
-	// }
+	return l
 }

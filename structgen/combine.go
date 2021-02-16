@@ -23,7 +23,7 @@ type combineGenerator struct {
 }
 
 type templateGenerator interface {
-	collectParams(aqi *aq.Instance, oldGeneratedCode []byte) error
+	collectParams(aqi *aq.AQ, oldGeneratedCode []byte) error
 	generate() ([]byte, error)
 }
 
@@ -67,10 +67,10 @@ func (g *combineGenerator) generatedFilePath() string {
 }
 
 func (g *combineGenerator) collectParams() error {
-	aqi := aq.New().MustLoadDir(*path, aq.IngoreSuffix(g.genFileSuffix))
+	aqi := aq.MustLoadDir(*path, aq.IngoreSuffix(g.genFileSuffix))
 	s := aqi.Structs().Find(aq.StructNameIs(g.structName))
 	if !s.Exists() {
-		return errors.New("generate target struct not found")
+		return errors.Errorf("generate target struct not found: %s", g.structName)
 	}
 
 	file := s.File()
@@ -136,7 +136,7 @@ type importParams struct {
 	PathLiteral string
 }
 
-func createImportParams(imports aq.Imports) []importParams {
+func createImportParams(imports aq.ImportSpecs) []importParams {
 	r := []importParams{}
 	for _, i := range imports {
 		r = append(r, importParams{

@@ -27,7 +27,7 @@ func newGetterGenerator(structName string) *getterGenerator {
 	}
 }
 
-func (g *getterGenerator) collectParams(aqi *aq.Instance, oldGeneratedCode []byte) error {
+func (g *getterGenerator) collectParams(aqi *aq.AQ, oldGeneratedCode []byte) error {
 	s := aqi.Structs().Find(aq.StructNameIs(g.structName))
 	if !s.Exists() {
 		return errors.Errorf("struct %#v not found", g.structName)

@@ -9,20 +9,21 @@ import (
 )
 
 type cmdParams struct {
-	recv       string
-	isGen      bool
-	structType string
-	iface      string
-	ifaceType  string
-	ifacePkg   string
+	recv      string
+	isGen     bool
+	implType  string
+	iface     string
+	ifaceType string
+	ifacePkg  string
+	gofile    string
 }
 
-func createCmdParams(recv string, iface string) (cmdParams, error) {
+func createCmdParams(gofile string, recv string, iface string) (cmdParams, error) {
 	ptr := strings.HasPrefix(recv, "*")
 
-	structType := recv
+	implType := recv
 	if ptr {
-		structType = recv[1:]
+		implType = recv[1:]
 	}
 
 	slashPos := strings.LastIndex(iface, "/")
@@ -41,11 +42,12 @@ func createCmdParams(recv string, iface string) (cmdParams, error) {
 	}
 
 	return cmdParams{
-		recv:       recv,
-		structType: structType,
-		ifacePkg:   ifacePkg,
-		ifaceType:  ifaceType,
-		iface:      iface,
+		recv:      recv,
+		implType:  implType,
+		ifacePkg:  ifacePkg,
+		ifaceType: ifaceType,
+		iface:     iface,
+		gofile:    gofile,
 	}, nil
 }
 
@@ -93,10 +95,6 @@ func main() {
 	}
 	gen := createGenerators(prm)
 
-	if err := gen.collectParams(); err != nil {
-		log.Fatalln("failed collect params:", err)
-	}
-
 	if err := gen.generate(); err != nil {
 		log.Fatalln("failed generate params:", err)
 	}
@@ -104,13 +102,13 @@ func main() {
 
 func mapArgs() (cmdParams, error) {
 	args := os.Args
-	if len(args) != 3 {
+	if len(args) != 4 {
 		return cmdParams{}, errors.New("invalid args")
 	}
 
-	typ, iface := args[1], args[2]
+	gofile, typ, iface := args[1], args[2], args[3]
 
-	return createCmdParams(typ, iface)
+	return createCmdParams(gofile, typ, iface)
 }
 
 func createGenerators(prms cmdParams) *generator {

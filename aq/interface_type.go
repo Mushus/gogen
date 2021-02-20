@@ -2,11 +2,11 @@ package aq
 
 import "go/ast"
 
-type Interface struct {
+type InterfaceType struct {
 	i   *AQ                `getter:"-"`
 	typ *ast.InterfaceType `getter:"-"`
 }
 
-func (i *Interface) Name() string {
+func (i *InterfaceType) Name() string {
 	return ""
 }

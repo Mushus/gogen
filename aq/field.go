@@ -13,9 +13,10 @@ func (f *Field) Exists() bool {
 }
 
 func (f *Field) Name() string {
-	if !f.Exists() {
+	if f == nil {
 		return ""
 	}
+
 	return safeIdentsName(f.field.Names)
 }
 

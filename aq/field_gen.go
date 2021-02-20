@@ -182,3 +182,35 @@ func (r Fields) Take(size int) Fields {
 	}
 	return r[:size]
 }
+
+func (r Fields) Names() []string {
+	l := make([]string, 0, len(r))
+	for _, r := range r {
+		l = append(l, r.Name())
+	}
+	return l
+}
+
+func (r Fields) Types() []*Type {
+	l := make([]*Type, 0, len(r))
+	for _, r := range r {
+		l = append(l, r.Type())
+	}
+	return l
+}
+
+func (r Fields) Tags() []*Tag {
+	l := make([]*Tag, 0, len(r))
+	for _, r := range r {
+		l = append(l, r.Tag())
+	}
+	return l
+}
+
+func (r Fields) IsExporteds() []bool {
+	l := make([]bool, 0, len(r))
+	for _, r := range r {
+		l = append(l, r.IsExported())
+	}
+	return l
+}

@@ -182,3 +182,43 @@ func (r FuncDecls) Take(size int) FuncDecls {
 	}
 	return r[:size]
 }
+
+func (r FuncDecls) Names() []string {
+	l := make([]string, 0, len(r))
+	for _, r := range r {
+		l = append(l, r.Name())
+	}
+	return l
+}
+
+func (r FuncDecls) Recvs() []*Field {
+	l := make([]*Field, 0, len(r))
+	for _, r := range r {
+		l = append(l, r.Recv())
+	}
+	return l
+}
+
+func (r FuncDecls) Types() []*FuncType {
+	l := make([]*FuncType, 0, len(r))
+	for _, r := range r {
+		l = append(l, r.Type())
+	}
+	return l
+}
+
+func (r FuncDecls) ParamsList() []Fields {
+	l := make([]Fields, 0, len(r))
+	for _, r := range r {
+		l = append(l, r.Params())
+	}
+	return l
+}
+
+func (r FuncDecls) ResultsList() []Fields {
+	l := make([]Fields, 0, len(r))
+	for _, r := range r {
+		l = append(l, r.Results())
+	}
+	return l
+}

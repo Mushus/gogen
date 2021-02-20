@@ -7,14 +7,14 @@ import (
 )
 
 func NewTypeSpec(
-	instance *AQ,
+	aq *AQ,
 	file *File,
 	spec *ast.TypeSpec,
 ) *TypeSpec {
 	c := &TypeSpec{
-		instance: instance,
-		file:     file,
-		spec:     spec,
+		aq:   aq,
+		file: file,
+		spec: spec,
 	}
 
 	return c

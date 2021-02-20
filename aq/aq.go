@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-//go:generate go run github.com/Mushus/gogen/structgen -construct Field,File,FuncDecl,FuncType,ImportSpec,Interface,Struct,TypeSpec -list Field,File,FuncDecl,FuncType,ImportSpec,Interface,Struct,TypeSpec
+//go:generate go run github.com/Mushus/gogen/structgen -construct Field,File,FuncDecl,FuncType,ImportSpec,InterfaceSpec,InterfaceType,StructSpec,TypeSpec -list Field,File,FuncDecl,FuncType,ImportSpec,InterfaceSpec,InterfaceType,StructSpec,TypeSpec
 
 type AQ struct {
 	fileSet *token.FileSet
@@ -231,11 +231,11 @@ func (a *AQ) Types() TypeSpecs {
 	return l
 }
 
-func (a *AQ) Interfaces() Interfaces {
+func (a *AQ) Interfaces() InterfaceSpecs {
 	return a.Types().Interfaces()
 }
 
-func (a *AQ) Structs() Structs {
+func (a *AQ) Structs() StructSpecs {
 	return a.Types().Structs()
 }
 

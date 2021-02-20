@@ -182,3 +182,19 @@ func (r ImportSpecs) Take(size int) ImportSpecs {
 	}
 	return r[:size]
 }
+
+func (r ImportSpecs) Names() []string {
+	l := make([]string, 0, len(r))
+	for _, r := range r {
+		l = append(l, r.Name())
+	}
+	return l
+}
+
+func (r ImportSpecs) Paths() []string {
+	l := make([]string, 0, len(r))
+	for _, r := range r {
+		l = append(l, r.Path())
+	}
+	return l
+}

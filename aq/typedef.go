@@ -1,59 +1,55 @@
 package aq
 
 import (
+	"bytes"
 	"go/ast"
+	"go/format"
+	"go/token"
 )
 
-type TypeSpec struct {
-	instance *AQ           `getter:"-"`
-	file     *File         `getter:"-"`
-	spec     *ast.TypeSpec `getter:"-"`
+type Type struct {
+	instance *AQ      `getter:"-"`
+	typ      ast.Expr `getter:"-"`
 }
 
-func (t *TypeSpec) Interface() *Interface {
-	i, ok := t.spec.Type.(*ast.InterfaceType)
-	if !ok {
-		return nil
+func createType(typ ast.Expr) *Type {
+	return &Type{
+		typ: typ,
 	}
-
-	return NewInterface(t.instance, i)
 }
 
-func (t *TypeSpec) Struct() *Struct {
-	s, ok := t.spec.Type.(*ast.StructType)
-	if !ok {
-		return nil
+func (t *Type) Name() string {
+	if t == nil {
+		return ""
 	}
-
-	return NewStruct(t.instance, t.file, t.spec, s)
+	buf := new(bytes.Buffer)
+	_ = format.Node(buf, token.NewFileSet(), t.typ)
+	return buf.String()
 }
 
-func (t TypeSpecs) Interfaces() Interfaces {
+func (t *Type) GoCode() string {
+	if t == nil {
+		return ""
+	}
+	buf := new(bytes.Buffer)
+	_ = format.Node(buf, token.NewFileSet(), t.typ)
+	return buf.String()
+}
+
+func (t *Type) IsPtr() bool {
+	if t == nil {
+		return false
+	}
+	_, ok := t.typ.(*ast.StarExpr)
+	return ok
+}
+
+func (t *Type) UnwrapPtr() *Type {
 	if t == nil {
 		return nil
 	}
-
-	l := Interfaces{}
-	for _, td := range t {
-		i := td.Interface()
-		if i != nil {
-			l = append(l, i)
-		}
+	if star, ok := t.typ.(*ast.StarExpr); ok {
+		return createType(star.X)
 	}
-	return l
-}
-
-func (t TypeSpecs) Structs() Structs {
-	if t == nil {
-		return nil
-	}
-
-	l := Structs{}
-	for _, td := range t {
-		i := td.Struct()
-		if i != nil {
-			l = append(l, i)
-		}
-	}
-	return l
+	return t
 }

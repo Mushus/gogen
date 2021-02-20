@@ -185,10 +185,26 @@ func (r Files) Take(size int) Files {
 	return r[:size]
 }
 
-func (r Files) TypesList() []TypeSpecs {
-	l := make([]TypeSpecs, 0, len(r))
+func (r Files) ImportsList() []ImportSpecs {
+	l := make([]ImportSpecs, 0, len(r))
 	for _, r := range r {
-		l = append(l, r.Types())
+		l = append(l, r.Imports())
+	}
+	return l
+}
+
+func (r Files) Packages() []string {
+	l := make([]string, 0, len(r))
+	for _, r := range r {
+		l = append(l, r.Package())
+	}
+	return l
+}
+
+func (r Files) StructsList() []StructSpecs {
+	l := make([]StructSpecs, 0, len(r))
+	for _, r := range r {
+		l = append(l, r.Structs())
 	}
 	return l
 }

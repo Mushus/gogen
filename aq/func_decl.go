@@ -1,7 +1,10 @@
 package aq
 
 import (
+	"bytes"
 	"go/ast"
+	"go/format"
+	"go/token"
 )
 
 type FuncDecl struct {
@@ -46,4 +49,13 @@ func (f *FuncDecl) Params() Fields {
 
 func (f *FuncDecl) Results() Fields {
 	return f.Type().Results()
+}
+
+func (f *FuncDecl) BodyCode() string {
+	if f == nil {
+		return ""
+	}
+	buf := new(bytes.Buffer)
+	_ = format.Node(buf, token.NewFileSet(), f.decl.Body)
+	return buf.String()
 }

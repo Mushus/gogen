@@ -48,6 +48,6 @@ func (f *File) Types() TypeSpecs {
 	return l
 }
 
-func (f *File) Structs() Structs {
+func (f *File) Structs() StructSpecs {
 	return f.Types().Structs()
 }

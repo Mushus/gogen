@@ -81,3 +81,6 @@ func TestCollectIfMethods(t *testing.T) {
 	methods, err := main.CollectInterfaceMethods(pkgs, "golang.org/fake/a", "A")
 	t.Logf("--> %#v\n", methods)
 }
+
+func TestEqualType(t *testing.T) {
+}

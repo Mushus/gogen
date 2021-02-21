@@ -140,7 +140,7 @@ func overwriteMethodParams(dst *ast.FieldList, src *ast.FieldList) *ast.FieldLis
 		for i, srcF := range src.List {
 			var doc *ast.CommentGroup
 			var comment *ast.CommentGroup
-			var names []*ast.Ident
+			names := srcF.Names
 			if dst != nil && i < len(dst.List) {
 				dstF := dst.List[i]
 				doc = dstF.Doc
@@ -148,9 +148,6 @@ func overwriteMethodParams(dst *ast.FieldList, src *ast.FieldList) *ast.FieldLis
 				names = dstF.Names
 			}
 
-			if len(srcF.Names) > 0 {
-				names = srcF.Names
-			}
 			if names == nil {
 				names = []*ast.Ident{{Name: fmt.Sprintf("param%d", i+1)}}
 			}
@@ -181,15 +178,17 @@ func overwriteMethodResults(dst *ast.FieldList, src *ast.FieldList) *ast.FieldLi
 		for i, srcF := range src.List {
 			var doc *ast.CommentGroup
 			var comment *ast.CommentGroup
+			names := srcF.Names
 			if dst != nil && i < len(dst.List) {
 				dstF := dst.List[i]
 				doc = dstF.Doc
 				comment = dstF.Comment
+				names = dstF.Names
 			}
 
 			newFL.List = append(newFL.List, &ast.Field{
 				Doc:     doc,
-				Names:   srcF.Names,
+				Names:   names,
 				Type:    srcF.Type,
 				Comment: comment,
 			})

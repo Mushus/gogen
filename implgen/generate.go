@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/mattn/natural"
 	"github.com/pkg/errors"
@@ -25,7 +26,7 @@ type generator struct {
 
 func (g *generator) generate() error {
 	p := g.cmdParams
-	fname := p.gofile
+	fname := p.dst
 	typeName := p.implType
 
 	m, err := loadInterfaceMethods(p.ifacePkg, p.ifaceType)
@@ -36,7 +37,7 @@ func (g *generator) generate() error {
 	fset := token.NewFileSet()
 	var file *ast.File
 	if _, err := os.Stat(fname); err == nil {
-		file, err = parser.ParseFile(fset, fname, nil, 0)
+		file, err = parser.ParseFile(fset, fname, nil, parser.AllErrors|parser.ParseComments)
 		if err != nil {
 			return err
 		}
@@ -139,10 +140,19 @@ func overwriteMethodParams(dst *ast.FieldList, src *ast.FieldList) *ast.FieldLis
 		for i, srcF := range src.List {
 			var doc *ast.CommentGroup
 			var comment *ast.CommentGroup
+			var names []*ast.Ident
 			if dst != nil && i < len(dst.List) {
 				dstF := dst.List[i]
 				doc = dstF.Doc
 				comment = dstF.Comment
+				names = dstF.Names
+			}
+
+			if len(srcF.Names) > 0 {
+				names = srcF.Names
+			}
+			if names == nil {
+				names = []*ast.Ident{{Name: fmt.Sprintf("param%d", i+1)}}
 			}
 
 			newFL.List = append(newFL.List, &ast.Field{
@@ -399,7 +409,7 @@ type MethodSet struct {
 }
 
 func generateMethods(recvType string, name string, typ *ast.FuncType) *ast.FuncDecl {
-	recvVar := string([]rune(recvType)[0])
+	recvVar := strings.ToLower(string([]rune(recvType)[0]))
 	return &ast.FuncDecl{
 		Doc: nil,
 		Recv: &ast.FieldList{

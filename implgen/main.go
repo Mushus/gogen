@@ -1,7 +1,8 @@
 package main
 
 import (
-	"log"
+	"flag"
+	"fmt"
 	"os"
 	"strings"
 
@@ -15,10 +16,10 @@ type cmdParams struct {
 	iface     string
 	ifaceType string
 	ifacePkg  string
-	gofile    string
+	dst       string
 }
 
-func createCmdParams(gofile string, recv string, iface string) (cmdParams, error) {
+func createCmdParams(dst string, recv string, iface string) (cmdParams, error) {
 	ptr := strings.HasPrefix(recv, "*")
 
 	implType := recv
@@ -47,7 +48,7 @@ func createCmdParams(gofile string, recv string, iface string) (cmdParams, error
 		ifacePkg:  ifacePkg,
 		ifaceType: ifaceType,
 		iface:     iface,
-		gofile:    gofile,
+		dst:       dst,
 	}, nil
 }
 
@@ -91,24 +92,38 @@ type targetStruct struct {
 func main() {
 	prm, err := mapArgs()
 	if err != nil {
-		log.Fatalln("failed get params:", err)
+		usage(err)
+		os.Exit(1)
 	}
-	gen := createGenerators(prm)
 
+	gen := createGenerators(prm)
 	if err := gen.generate(); err != nil {
-		log.Fatalln("failed generate params:", err)
+		usage(err)
+		os.Exit(1)
 	}
 }
 
 func mapArgs() (cmdParams, error) {
-	args := os.Args
-	if len(args) != 4 {
-		return cmdParams{}, errors.New("invalid args")
+	dst := flag.String("dst", os.Getenv("GOFILE"), "destination go file path")
+
+	flag.Parse()
+
+	args := flag.Args()
+	if len(args) != 2 {
+		return cmdParams{}, fmt.Errorf("invalid args: the number of args must be 2, got %d", len(args))
 	}
 
-	gofile, typ, iface := args[1], args[2], args[3]
+	typ, iface := args[0], args[1]
 
-	return createCmdParams(gofile, typ, iface)
+	return createCmdParams(*dst, typ, iface)
+}
+
+func usage(err error) {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+	}
+	fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS...] ReciverType path/to/go/package.InterfaceType\n", os.Args[0])
+	flag.PrintDefaults()
 }
 
 func createGenerators(prms cmdParams) *generator {

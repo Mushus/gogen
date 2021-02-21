@@ -72,13 +72,19 @@ func (g *generator) generate() error {
 		return true
 	}, nil)
 
-	for _, ms := range m.GetDeficients() {
-		file.Decls = append(file.Decls, generateMethods(typeName, ms.Name, ms.Type))
-	}
-
 	buf := new(bytes.Buffer)
 	if err := format.Node(buf, fset, file); err != nil {
 		return err
+	}
+
+	for i, ms := range m.GetDeficients() {
+		if i == 0 {
+			buf.WriteString("\n")
+		}
+		if err := format.Node(buf, fset, generateMethods(typeName, ms.Name, ms.Type)); err != nil {
+			return err
+		}
+		buf.WriteString("\n")
 	}
 
 	if err := ioutil.WriteFile(fname, buf.Bytes(), 0644); err != nil {
